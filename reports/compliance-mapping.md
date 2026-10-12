@@ -2,9 +2,9 @@
 
 | Nguồn / yêu cầu | Control đã làm | Evidence file:dòng | Giới hạn |
 |---|---|---|---|
-| Luật 91/2025/QH15 | | | |
-| NĐ 356/2025/NĐ-CP | | | |
-| Luật AI 134/2025/QH15 | | | |
-| OWASP ASI01, ASI03, ASI04 | | | |
+| Luật 91/2025/QH15 (Bảo vệ dữ liệu cá nhân) | PII gate tự động phát hiện và che giấu CCCD/SĐT/STK/Email; Phân quyền OBO (On-Behalf-Of) hạn chế quyền truy cập dữ liệu nhạy cảm theo vai trò (chặn `support_l1`, cho phép `dpo`). | `agent/pii.py:34-70`<br>`agent/policy.py:59-88`<br>`agent/runner.py:84-126`<br>`tests/test_obo.py:29-32` | Dữ liệu tổng hợp (synthetic); điều khoản văn bản luật cụ thể ghi `chưa xác minh` (cần đối chiếu bản công báo chính thức); cờ `--as` là mô phỏng danh tính, chưa phải cơ chế AuthN/SSO thực tế. |
+| NĐ 356/2025/NĐ-CP (Nghị định hướng dẫn dữ liệu) | PEP chặn tuyệt đối luồng xuất dữ liệu (egress) khi phân loại dữ liệu là `restricted`; Audit ledger bất biến lưu trữ hash chain toàn bộ lượt gọi tool và quyết định allow/deny kèm lý do. | `agent/policy.py:46-48`<br>`agent/ledger.py:21-41`<br>`agent/runner.py:136-160`<br>`reports/ledger.jsonl`<br>`reports/attack-after.log` (rỗng) | Điều khoản chi tiết ghi `chưa xác minh`; Ledger chỉ là hash chain cục bộ một file, phát hiện được sửa đổi trong chuỗi nhưng không chống được cắt đuôi nếu thiếu mốc tin cậy bên ngoài. |
+| Luật AI 134/2025/QH15 (Quản lý an toàn hệ thống AI) | Triển khai kiến trúc Trifecta Split tách biệt Run A (xử lý nội dung không tin cậy) và Run B (truy cập dữ liệu riêng tư); Run B chỉ nhận typed ticket IDs từ tên file, chặn hoàn toàn free text của attacker; kiểm soát giới hạn ủy quyền (delegation scope limitation). | `agent/runner.py:38-126`<br>`agent/policy.py:75-81`<br>`tests/test_split.py:75-116`<br>`tests/test_obo.py:39-42` | Điều khoản chi tiết ghi `chưa xác minh`; Kiểm thử trên Mock LLM deterministic, chưa bao quát được toàn bộ các kỹ thuật jailbreak / injection đa phương thức của các model phức tạp. |
+| OWASP ASI01, ASI03, ASI04 | - **ASI01 (Prompt Injection):** Trifecta Split ngăn luồng tấn công gián tiếp điều khiển private store.<br>- **ASI03 (Supply Chain & Secrets):** Hash-pinning trong `requirements.lock`, pre-commit hook Gitleaks pin v8.30.1.<br>- **ASI04 (Improper Authorization):** OBO verification, kiểm tra expiration timestamp (TTL) và purpose. | `agent/runner.py:70-82`<br>`requirements.lock`<br>`.pre-commit-config.yaml:1-6`<br>`agent/policy.py:50-88`<br>`tests/test_supply_chain.py:11-41` | Mô phỏng trong phạm vi repo sinh viên; không thay thế hoàn toàn cho WAF, API Gateway quản lý token production và quy trình rotation secret thực tế của hạ tầng. |
 
 Chỉ ghi điều khoản cụ thể khi đã đối chiếu văn bản gốc. Mô phỏng kỹ thuật không tự chứng minh tuân thủ pháp luật.
